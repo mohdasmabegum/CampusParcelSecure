@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CampusParcelSecure</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 CampusParcelSecure</h1>
+            <p class="subtitle">Student Parcel Verification System</p>
+        </header>
+
+        <main>
+            <div class="welcome-section">
+                <h2>Welcome to CampusParcelSecure</h2>
+                <p>A secure student parcel verification system that ensures safe delivery confirmation using a two-step OTP validation process.</p>
+                
+                <div class="features">
+                    <div class="feature-card">
+                        <div class="feature-icon">📦</div>
+                        <h3>Register Parcel</h3>
+                        <p>Upload parcel image and generate OTP for secure tracking</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">✅</div>
+                        <h3>Verify & Receive</h3>
+                        <p>Verify identity with OTP and mark parcel as received</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔒</div>
+                        <h3>Secure Process</h3>
+                        <p>Image verification and OTP-based authentication</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="action-buttons">
+                <a href="{{ url_for('register_page') }}" class="btn btn-primary">
+                    <span>📸</span> Register New Parcel
+                </a>
+                <a href="{{ url_for('verify_page') }}" class="btn btn-secondary">
+                    <span>🔍</span> Verify & Receive Parcel
+                </a>
+            </div>
+
+            <div class="info-section">
+                <h3>How It Works</h3>
+                <ol class="steps">
+                    <li><strong>Registration:</strong> Campus staff uploads parcel image and student details to generate a unique OTP</li>
+                    <li><strong>Notification:</strong> Student receives the OTP for parcel collection</li>
+                    <li><strong>Verification:</strong> Student enters their ID and OTP to verify and collect the parcel</li>
+                    <li><strong>Confirmation:</strong> System marks the parcel as received upon successful verification</li>
+                </ol>
+            </div>
+        </main>
+
+        <footer>
+            <p>&copy; 2024 CampusParcelSecure - Secure Parcel Delivery System</p>
+        </footer>
+    </div>
+</body>
+</html>

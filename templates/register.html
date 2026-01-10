@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Parcel - CampusParcelSecure</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 CampusParcelSecure</h1>
+            <p class="subtitle">Register New Parcel</p>
+            <a href="{{ url_for('index') }}" class="back-link">← Back to Home</a>
+        </header>
+
+        <main>
+            <div class="form-container">
+                <h2>📦 Parcel Registration</h2>
+                <p class="form-description">Upload parcel image and enter student details to generate OTP</p>
+
+                <form id="registerForm" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label for="student_name">Student Name:</label>
+                        <input type="text" id="student_name" name="student_name" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="student_id">Student ID:</label>
+                        <input type="text" id="student_id" name="student_id" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="image">Parcel Image:</label>
+                        <div class="image-upload-section">
+                            <input type="file" id="imageInput" name="image" accept="image/*" capture="camera" required>
+                            <div id="imagePreview" class="image-preview"></div>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">
+                        <span>📦</span> Register Parcel
+                    </button>
+                </form>
+
+                <div id="result" class="result-message"></div>
+            </div>
+        </main>
+
+        <footer>
+            <p><a href="{{ url_for('index') }}">← Back to Home</a></p>
+        </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/register.js') }}"></script>
+</body>
+</html>
