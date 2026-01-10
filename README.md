@@ -77,6 +77,33 @@ http://localhost:5000
 - Secure file upload with type validation
 - One-time parcel verification (prevents duplicate claims)
 - Database storage of all transactions
+- Environment-based configuration for secret key and debug mode
+
+## Production Deployment
+
+For production deployment, it's recommended to:
+
+1. Set a strong SECRET_KEY:
+```bash
+export SECRET_KEY='your-strong-random-secret-key'
+```
+
+2. Disable debug mode (default):
+```bash
+# Debug is disabled by default
+# Only enable for development: export FLASK_DEBUG=true
+python app.py
+```
+
+3. Use a production-ready WSGI server like Gunicorn:
+```bash
+pip install gunicorn
+gunicorn -w 4 -b 0.0.0.0:5000 app:app
+```
+
+4. Set up HTTPS/SSL for secure communication
+5. Use a proper database (PostgreSQL, MySQL) instead of SQLite for production
+6. Implement proper backup and monitoring systems
 
 ## Screenshots
 
