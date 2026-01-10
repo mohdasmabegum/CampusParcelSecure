@@ -8,7 +8,7 @@ from werkzeug.utils import secure_filename
 import base64
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'campus-parcel-secure-key-2024'
+app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'campus-parcel-secure-key-2024')
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB max file size
 app.config['ALLOWED_EXTENSIONS'] = {'png', 'jpg', 'jpeg', 'gif'}

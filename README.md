@@ -29,12 +29,17 @@ cd CampusParcelSecure
 pip install -r requirements.txt
 ```
 
-3. Run the application:
+3. (Optional) Set a custom secret key for production:
+```bash
+export SECRET_KEY='your-secure-random-key-here'
+```
+
+4. Run the application:
 ```bash
 python app.py
 ```
 
-4. Open your browser and navigate to:
+5. Open your browser and navigate to:
 ```
 http://localhost:5000
 ```
