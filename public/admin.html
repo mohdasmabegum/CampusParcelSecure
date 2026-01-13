@@ -113,7 +113,7 @@
 
         async function loadStats() {
             try {
-                const response = await fetch('http://localhost:3000/api/stats');
+                const response = await fetch('https://campus-parcel-secure.onrender.com/api/parcels');
                 const stats = await response.json();
                 
                 document.getElementById('totalParcels').textContent = stats.total;
@@ -155,18 +155,18 @@
                         <div class="parcel-images">
                             <div class="image-wrapper">
                                 <h4>Delivery Image</h4>
-                                <img src="http://localhost:3000/uploads/${parcel.deliveryImage}" 
+                                <img src="https://campus-parcel-secure.onrender.com/uploads/${parcel.deliveryImage}" 
                                      alt="Delivery" 
                                      class="thumbnail"
-                                     onclick="showImage('http://localhost:3000/uploads/${parcel.deliveryImage}')">
+                                     onclick="showImage('https://campus-parcel-secure.onrender.com/uploads/${parcel.deliveryImage}')">
                             </div>
                             ${parcel.pickupImage ? `
                             <div class="image-wrapper">
                                 <h4>Pickup Image</h4>
-                                <img src="http://localhost:3000/uploads/${parcel.pickupImage}" 
+                                <img src="https://campus-parcel-secure.onrender.com/uploads/${parcel.pickupImage}" 
                                      alt="Pickup" 
                                      class="thumbnail"
-                                     onclick="showImage('http://localhost:3000/uploads/${parcel.pickupImage}')">
+                                     onclick="showImage('https://campus-parcel-secure.onrender.com/uploads/${parcel.pickupImage}')">
                             </div>
                             ` : ''}
                         </div>
