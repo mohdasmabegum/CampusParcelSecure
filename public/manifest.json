@@ -1,0 +1,50 @@
+{
+  "name": "Campus Parcel Secure",
+  "short_name": "Parcel Secure",
+  "description": "Secure parcel management system with OTP and image verification for campus",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#667eea",
+  "theme_color": "#667eea",
+  "orientation": "portrait-primary",
+  "scope": "./",
+  "icons": [
+    {
+      "src": "./icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "./icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Delivery",
+      "short_name": "Deliver",
+      "description": "Register a new parcel delivery",
+      "url": "./delivery.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Pickup",
+      "short_name": "Pickup",
+      "description": "Pick up a parcel",
+      "url": "./pickup.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Admin",
+      "short_name": "Admin",
+      "description": "View admin dashboard",
+      "url": "./admin.html",
+      "icons": [{ "src": "./icon-192.png", "sizes": "192x192" }]
+    }
+  ]
+}

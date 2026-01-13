@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Pick up your parcel using OTP verification">
+    <meta name="theme-color" content="#667eea">
+    <title>Parcel Pickup - Campus Parcel Secure</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">Campus Parcel Secure</div>
+            <div class="nav-links">
+                <a href="delivery.html">Delivery</a>
+                <a href="pickup.html" class="active">Pickup</a>
+                <a href="admin.html">Admin</a>
+            </div>
+        </nav>
+
+        <div class="content">
+            <div class="card">
+                <h1>📥 Parcel Pickup</h1>
+                <p class="subtitle">Enter your credentials to collect your parcel</p>
+
+                <form id="pickupForm">
+                    <div class="form-group">
+                        <label for="studentId">Student ID *</label>
+                        <input type="text" id="studentId" name="studentId" required placeholder="e.g., STU001">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="otp">OTP *</label>
+                        <div class="otp-container" style="display: flex; gap: 10px; justify-content: center; margin: 10px 0;">
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                            <input type="text" class="otp-input" maxlength="1" pattern="[0-9]" inputmode="numeric" autocomplete="off" required>
+                        </div>
+                        <input type="hidden" id="otp" name="otp" required>
+                        <small>Enter the 6-digit OTP provided during delivery</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="image">Your Photo with Parcel *</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="image" name="image" accept="image/*" capture="user" required>
+                            <div id="imagePreview" class="image-preview"></div>
+                        </div>
+                        <small>Take a selfie with the parcel for verification</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Confirm Pickup</button>
+                </form>
+
+                <div id="result" class="result-box" style="display: none;"></div>
+
+                <div class="info-section">
+                    <h3>ℹ️ Pickup Instructions</h3>
+                    <ol>
+                        <li>Enter your Student ID</li>
+                        <li>Enter the OTP you received when the parcel was delivered</li>
+                        <li>Take a photo with the parcel</li>
+                        <li>Submit to complete the pickup</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('pickupForm');
+        const imageInput = document.getElementById('image');
+        const imagePreview = document.getElementById('imagePreview');
+        const resultDiv = document.getElementById('result');
+
+        // Image preview
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('studentId', document.getElementById('studentId').value);
+            formData.append('otp', document.getElementById('otp').value);
+            formData.append('image', imageInput.files[0]);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/pickup', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result-box success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Parcel Pickup Successful!</h3>
+                        <p><strong>Parcel ID:</strong> ${data.parcelId}</p>
+                        <p>Thank you for using Campus Parcel Secure!</p>
+                        <p class="info-text">Your parcel has been marked as delivered.</p>
+                    `;
+                    resultDiv.style.display = 'block';
+                    form.reset();
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+
+                    // Auto-hide and redirect after 5 seconds
+                    setTimeout(() => {
+                        resultDiv.style.display = 'none';
+                    }, 5000);
+                } else {
+                    throw new Error(data.error || 'Pickup failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result-box error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Pickup Failed</h3>
+                    <p>${error.message}</p>
+                    <p class="info-text">Please verify your Student ID and OTP are correct.</p>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        });
+
+        // OTP input handling
+        const otpInputs = document.querySelectorAll('.otp-input');
+        const hiddenOtpField = document.getElementById('otp');
+
+        otpInputs.forEach((input, index) => {
+            // Handle input
+            input.addEventListener('input', function(e) {
+                // Only allow numbers
+                this.value = this.value.replace(/[^0-9]/g, '');
+                
+                // Update hidden field
+                updateHiddenOtpField();
+                
+                // Auto-focus next input
+                if (this.value && index < otpInputs.length - 1) {
+                    otpInputs[index + 1].focus();
+                }
+            });
+
+            // Handle backspace
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Backspace' && !this.value && index > 0) {
+                    otpInputs[index - 1].focus();
+                }
+            });
+
+            // Handle paste
+            input.addEventListener('paste', function(e) {
+                e.preventDefault();
+                const pastedData = e.clipboardData.getData('text').replace(/[^0-9]/g, '');
+                const digits = pastedData.split('').slice(0, 6);
+                
+                digits.forEach((digit, i) => {
+                    if (otpInputs[i]) {
+                        otpInputs[i].value = digit;
+                    }
+                });
+                
+                updateHiddenOtpField();
+                
+                // Focus the next empty input or the last one
+                const nextEmptyIndex = digits.length < 6 ? digits.length : 5;
+                otpInputs[nextEmptyIndex].focus();
+            });
+        });
+
+        function updateHiddenOtpField() {
+            const otpValue = Array.from(otpInputs).map(input => input.value).join('');
+            hiddenOtpField.value = otpValue;
+        }
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

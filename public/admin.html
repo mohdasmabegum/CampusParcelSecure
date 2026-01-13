@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Admin dashboard for campus parcel management">
+    <meta name="theme-color" content="#667eea">
+    <title>Admin Dashboard - Campus Parcel Secure</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">Campus Parcel Secure</div>
+            <div class="nav-links">
+                <a href="delivery.html">Delivery</a>
+                <a href="pickup.html">Pickup</a>
+                <a href="admin.html" class="active">Admin</a>
+            </div>
+        </nav>
+
+        <div class="content">
+            <div class="card">
+                <h1>📊 Admin Dashboard</h1>
+                <p class="subtitle">Monitor all parcel activities</p>
+
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalParcels">0</div>
+                        <div class="stat-label">Total Parcels</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingParcels">0</div>
+                        <div class="stat-label">Pending Pickup</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="completedParcels">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+
+                <div class="filters">
+                    <label>
+                        <input type="radio" name="statusFilter" value="all" checked> All
+                    </label>
+                    <label>
+                        <input type="radio" name="statusFilter" value="pending"> Pending
+                    </label>
+                    <label>
+                        <input type="radio" name="statusFilter" value="completed"> Completed
+                    </label>
+                    <button class="btn btn-secondary" onclick="loadParcels()">🔄 Refresh</button>
+                </div>
+
+                <div id="parcelsContainer" class="parcels-container">
+                    <p class="loading">Loading parcels...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal for viewing images -->
+    <div id="imageModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <img id="modalImage" src="" alt="Parcel Image">
+        </div>
+    </div>
+
+    <script>
+        let allParcels = [];
+        const modal = document.getElementById('imageModal');
+        const modalImg = document.getElementById('modalImage');
+        const closeBtn = document.getElementsByClassName('close')[0];
+
+        // Load parcels on page load
+        window.addEventListener('load', loadParcels);
+
+        // Filter change
+        document.querySelectorAll('input[name="statusFilter"]').forEach(radio => {
+            radio.addEventListener('change', displayParcels);
+        });
+
+        // Modal close
+        closeBtn.onclick = function() {
+            modal.style.display = 'none';
+        }
+
+        window.onclick = function(event) {
+            if (event.target == modal) {
+                modal.style.display = 'none';
+            }
+        }
+
+        async function loadParcels() {
+            try {
+                const response = await fetch('http://localhost:3000/api/parcels');
+                allParcels = await response.json();
+                
+                // Sort by newest first
+                allParcels.sort((a, b) => new Date(b.deliveryTimestamp) - new Date(a.deliveryTimestamp));
+                
+                await loadStats();
+                displayParcels();
+            } catch (error) {
+                document.getElementById('parcelsContainer').innerHTML = `
+                    <p class="error">Error loading parcels: ${error.message}</p>
+                `;
+            }
+        }
+
+        async function loadStats() {
+            try {
+                const response = await fetch('http://localhost:3000/api/stats');
+                const stats = await response.json();
+                
+                document.getElementById('totalParcels').textContent = stats.total;
+                document.getElementById('pendingParcels').textContent = stats.pending;
+                document.getElementById('completedParcels').textContent = stats.completed;
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+
+        function displayParcels() {
+            const filterValue = document.querySelector('input[name="statusFilter"]:checked').value;
+            const filteredParcels = filterValue === 'all' 
+                ? allParcels 
+                : allParcels.filter(p => p.status === filterValue);
+
+            const container = document.getElementById('parcelsContainer');
+
+            if (filteredParcels.length === 0) {
+                container.innerHTML = '<p class="no-data">No parcels found</p>';
+                return;
+            }
+
+            container.innerHTML = filteredParcels.map(parcel => `
+                <div class="parcel-card ${parcel.status}">
+                    <div class="parcel-header">
+                        <h3>Parcel #${parcel.id}</h3>
+                        <span class="status-badge ${parcel.status}">${parcel.status.toUpperCase()}</span>
+                    </div>
+                    <div class="parcel-body">
+                        <div class="parcel-info">
+                            <p><strong>Student ID:</strong> ${parcel.studentId}</p>
+                            <p><strong>Student Name:</strong> ${parcel.studentName}</p>
+                            <p><strong>Description:</strong> ${parcel.parcelDescription}</p>
+                            <p><strong>OTP:</strong> <span class="otp-code">${parcel.otp}</span></p>
+                            <p><strong>Delivered At:</strong> ${formatDate(parcel.deliveryTimestamp)}</p>
+                            ${parcel.pickupTimestamp ? `<p><strong>Picked Up At:</strong> ${formatDate(parcel.pickupTimestamp)}</p>` : ''}
+                        </div>
+                        <div class="parcel-images">
+                            <div class="image-wrapper">
+                                <h4>Delivery Image</h4>
+                                <img src="http://localhost:3000/uploads/${parcel.deliveryImage}" 
+                                     alt="Delivery" 
+                                     class="thumbnail"
+                                     onclick="showImage('http://localhost:3000/uploads/${parcel.deliveryImage}')">
+                            </div>
+                            ${parcel.pickupImage ? `
+                            <div class="image-wrapper">
+                                <h4>Pickup Image</h4>
+                                <img src="http://localhost:3000/uploads/${parcel.pickupImage}" 
+                                     alt="Pickup" 
+                                     class="thumbnail"
+                                     onclick="showImage('http://localhost:3000/uploads/${parcel.pickupImage}')">
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function showImage(src) {
+            modal.style.display = 'block';
+            modalImg.src = src;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('en-US', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // Auto-refresh every 30 seconds
+        setInterval(loadParcels, 30000);
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>

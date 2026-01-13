@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Register incoming parcels for campus parcel secure system">
+    <meta name="theme-color" content="#667eea">
+    <title>Parcel Delivery - Campus Parcel Secure</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icon-192.png">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand">Campus Parcel Secure</div>
+            <div class="nav-links">
+                <a href="delivery.html" class="active">Delivery</a>
+                <a href="pickup.html">Pickup</a>
+                <a href="admin.html">Admin</a>
+            </div>
+        </nav>
+
+        <div class="content">
+            <div class="card">
+                <h1>📦 Parcel Delivery Registration</h1>
+                <p class="subtitle">Register incoming parcel for student pickup</p>
+
+                <form id="deliveryForm">
+                    <div class="form-group">
+                        <label for="studentId">Student ID *</label>
+                        <input type="text" id="studentId" name="studentId" required placeholder="e.g., STU001">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="studentName">Student Name *</label>
+                        <input type="text" id="studentName" name="studentName" required placeholder="Full Name">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="parcelDescription">Parcel Description</label>
+                        <textarea id="parcelDescription" name="parcelDescription" rows="3" placeholder="Optional description of the parcel"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="image">Parcel Image *</label>
+                        <div class="image-upload-container">
+                            <input type="file" id="image" name="image" accept="image/*" capture="environment" required>
+                            <div id="imagePreview" class="image-preview"></div>
+                        </div>
+                        <small>Take a photo or upload an image of the parcel</small>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary">Register Parcel</button>
+                </form>
+
+                <div id="result" class="result-box" style="display: none;"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('deliveryForm');
+        const imageInput = document.getElementById('image');
+        const imagePreview = document.getElementById('imagePreview');
+        const resultDiv = document.getElementById('result');
+
+        // Image preview
+        imageInput.addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    imagePreview.innerHTML = `<img src="${e.target.result}" alt="Preview">`;
+                    imagePreview.style.display = 'block';
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Form submission
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('studentId', document.getElementById('studentId').value);
+            formData.append('studentName', document.getElementById('studentName').value);
+            formData.append('parcelDescription', document.getElementById('parcelDescription').value);
+            formData.append('image', imageInput.files[0]);
+
+            try {
+                const response = await fetch('http://localhost:3000/api/delivery', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result-box success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Parcel Registered Successfully!</h3>
+                        <div class="otp-display">
+                            <p><strong>Parcel ID:</strong> ${data.parcelId}</p>
+                            <p><strong>Student ID:</strong> ${data.studentId}</p>
+                            <p class="otp-code"><strong>OTP:</strong> <span class="otp-number">${data.otp}</span></p>
+                            <p class="info-text">⚠️ Please provide this OTP to the student for parcel pickup</p>
+                        </div>
+                    `;
+                    resultDiv.style.display = 'block';
+                    form.reset();
+                    imagePreview.innerHTML = '';
+                    imagePreview.style.display = 'none';
+
+                    // Auto-hide after 10 seconds
+                    setTimeout(() => {
+                        resultDiv.style.display = 'none';
+                    }, 10000);
+                } else {
+                    throw new Error(data.error || 'Registration failed');
+                }
+            } catch (error) {
+                resultDiv.className = 'result-box error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p>${error.message}</p>
+                `;
+                resultDiv.style.display = 'block';
+            }
+        });
+    </script>
+    <script src="app.js"></script>
+</body>
+</html>
