@@ -97,7 +97,7 @@ let defaultAdminEnsured = false;
 const DEFAULT_ADMIN_ACCOUNT = {
   fullName: 'VMTW Admin',
   email: 'vmtw',
-  password: 'admin',
+  password: 'vmtwadmin',
   role: 'admin'
 };
 
@@ -174,7 +174,7 @@ async function ensureDefaultAdminAccount() {
   if (USE_SUPABASE) {
     const { data: existingUsers, error: existingUserError } = await supabase
       .from('users')
-      .select('id')
+      .select('id, role')
       .eq('email', normalizedEmail)
       .limit(1);
 
@@ -183,6 +183,37 @@ async function ensureDefaultAdminAccount() {
     }
 
     if (existingUsers && existingUsers.length > 0) {
+      const existingUser = existingUsers[0];
+      if (existingUser.role !== 'admin') {
+        const { data: existingAdmins, error: adminLookupError } = await supabase
+          .from('users')
+          .select('id')
+          .eq('role', 'admin')
+          .limit(2);
+
+        if (adminLookupError) {
+          throw new Error(adminLookupError.message);
+        }
+
+        if ((existingAdmins || []).length >= 2) {
+          return;
+        }
+      }
+
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          full_name: DEFAULT_ADMIN_ACCOUNT.fullName,
+          password: DEFAULT_ADMIN_ACCOUNT.password,
+          role: DEFAULT_ADMIN_ACCOUNT.role,
+          student_id: null
+        })
+        .eq('id', existingUser.id);
+
+      if (updateError) {
+        throw new Error(updateError.message);
+      }
+
       defaultAdminEnsured = true;
       return;
     }
@@ -221,6 +252,19 @@ async function ensureDefaultAdminAccount() {
 
   const existingUser = users.find((user) => user.email === normalizedEmail);
   if (existingUser) {
+    if (existingUser.role !== 'admin') {
+      const existingAdmins = users.filter((user) => user.role === 'admin');
+      if (existingAdmins.length >= 2) {
+        return;
+      }
+    }
+
+    existingUser.fullName = DEFAULT_ADMIN_ACCOUNT.fullName;
+    existingUser.password = DEFAULT_ADMIN_ACCOUNT.password;
+    existingUser.role = DEFAULT_ADMIN_ACCOUNT.role;
+    existingUser.studentId = null;
+
+    await persistData();
     defaultAdminEnsured = true;
     return;
   }

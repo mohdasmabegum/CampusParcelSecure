@@ -27,7 +27,7 @@
       "id": 2,
       "fullName": "VMTW Admin",
       "email": "vmtw",
-      "password": "admin",
+      "password": "vmtwadmin",
       "role": "admin",
       "studentId": null,
       "createdAt": "2026-03-01T00:00:00.000Z"
@@ -35,5 +35,5 @@
   ],
   "parcelIdCounter": 2,
   "userIdCounter": 3,
-  "updatedAt": "2026-03-01T08:20:01.549Z"
+  "updatedAt": "2026-03-01T09:29:27.285Z"
 }
