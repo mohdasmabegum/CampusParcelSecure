@@ -15,6 +15,7 @@
         <nav class="navbar">
             <div class="nav-brand">Campus Parcel Secure</div>
             <div class="nav-links">
+                <a href="index.html">Home</a>
                 <a href="delivery.html">Delivery</a>
                 <a href="pickup.html">Pickup</a>
                 <a href="admin.html" class="active">Admin</a>
@@ -22,7 +23,27 @@
         </nav>
 
         <div class="content">
-            <div class="card">
+            <div class="card" id="adminAuthWrapper">
+                <h1>🔐 Admin Access</h1>
+                <p class="subtitle">Admin login to access dashboard</p>
+
+                <form id="adminLoginForm">
+                    <div class="form-group">
+                        <label for="adminLoginEmail">Admin Email *</label>
+                        <input type="text" id="adminLoginEmail" required placeholder="admin@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="adminLoginPassword">Password *</label>
+                        <input type="password" id="adminLoginPassword" required placeholder="Your password">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Login</button>
+                </form>
+
+                <div id="adminLoginResult" class="result-box" style="display: none;"></div>
+                <div id="adminAuthHint" class="info-section" style="margin-top: 16px; display: none;"></div>
+            </div>
+
+            <div class="card" id="adminDashboardWrapper" style="display: none;">
                 <h1>📊 Admin Dashboard</h1>
                 <p class="subtitle">Monitor all parcel activities</p>
 
@@ -75,8 +96,13 @@
         const modalImg = document.getElementById('modalImage');
         const closeBtn = document.getElementsByClassName('close')[0];
 
-        // Load parcels on page load
-        window.addEventListener('load', loadParcels);
+        // Load parcels on page load (admin only)
+        window.addEventListener('load', () => {
+            if (typeof canAccessAdminDashboard === 'function' && !canAccessAdminDashboard()) {
+                return;
+            }
+            loadParcels();
+        });
 
         // Filter change
         document.querySelectorAll('input[name="statusFilter"]').forEach(radio => {
@@ -95,9 +121,32 @@
         }
 
         async function loadParcels() {
+            if (typeof canAccessAdminDashboard === 'function' && !canAccessAdminDashboard()) {
+                return;
+            }
+
             try {
-                const response = await fetch('http://localhost:3000/api/parcels');
-                allParcels = await response.json();
+                const response = await fetch('/api/parcels');
+                const responseText = await response.text();
+                let payload = null;
+                try {
+                    payload = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                    if (!response.ok) {
+                        throw new Error(responseText || 'Failed to load parcels');
+                    }
+                    throw new Error('Invalid parcels response from server');
+                }
+
+                if (!response.ok) {
+                    throw new Error(payload.error || 'Failed to load parcels');
+                }
+
+                if (!Array.isArray(payload)) {
+                    throw new Error('Invalid parcels response from server');
+                }
+
+                allParcels = payload;
                 
                 // Sort by newest first
                 allParcels.sort((a, b) => new Date(b.deliveryTimestamp) - new Date(a.deliveryTimestamp));
@@ -113,14 +162,38 @@
 
         async function loadStats() {
             try {
-                const response = await fetch('https://campus-parcel-secure.onrender.com/api/parcels');
-                const stats = await response.json();
+                const response = await fetch('/api/stats');
+                const responseText = await response.text();
+                let stats = null;
+                try {
+                    stats = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                    if (!response.ok) {
+                        throw new Error(responseText || 'Failed to load stats');
+                    }
+                    throw new Error('Invalid stats response from server');
+                }
+
+                if (!response.ok) {
+                    throw new Error(stats.error || 'Failed to load stats');
+                }
+
+                const total = Number(stats.total);
+                const pending = Number(stats.pending);
+                const completed = Number(stats.completed);
+
+                if ([total, pending, completed].some(Number.isNaN)) {
+                    throw new Error('Invalid stats response from server');
+                }
                 
-                document.getElementById('totalParcels').textContent = stats.total;
-                document.getElementById('pendingParcels').textContent = stats.pending;
-                document.getElementById('completedParcels').textContent = stats.completed;
+                document.getElementById('totalParcels').textContent = total;
+                document.getElementById('pendingParcels').textContent = pending;
+                document.getElementById('completedParcels').textContent = completed;
             } catch (error) {
                 console.error('Error loading stats:', error);
+                document.getElementById('totalParcels').textContent = '0';
+                document.getElementById('pendingParcels').textContent = '0';
+                document.getElementById('completedParcels').textContent = '0';
             }
         }
 
@@ -153,22 +226,7 @@
                             ${parcel.pickupTimestamp ? `<p><strong>Picked Up At:</strong> ${formatDate(parcel.pickupTimestamp)}</p>` : ''}
                         </div>
                         <div class="parcel-images">
-                            <div class="image-wrapper">
-                                <h4>Delivery Image</h4>
-                                <img src="https://campus-parcel-secure.onrender.com/uploads/${parcel.deliveryImage}" 
-                                     alt="Delivery" 
-                                     class="thumbnail"
-                                     onclick="showImage('https://campus-parcel-secure.onrender.com/uploads/${parcel.deliveryImage}')">
-                            </div>
-                            ${parcel.pickupImage ? `
-                            <div class="image-wrapper">
-                                <h4>Pickup Image</h4>
-                                <img src="https://campus-parcel-secure.onrender.com/uploads/${parcel.pickupImage}" 
-                                     alt="Pickup" 
-                                     class="thumbnail"
-                                     onclick="showImage('https://campus-parcel-secure.onrender.com/uploads/${parcel.pickupImage}')">
-                            </div>
-                            ` : ''}
+                            ${renderParcelImages(parcel)}
                         </div>
                     </div>
                 </div>
@@ -178,6 +236,66 @@
         function showImage(src) {
             modal.style.display = 'block';
             modalImg.src = src;
+        }
+
+        function onParcelImageError(imageElement) {
+            imageElement.style.display = 'none';
+            const fallback = imageElement.parentElement.querySelector('.image-fallback');
+            if (fallback) {
+                fallback.style.display = 'flex';
+            }
+        }
+
+        function handleParcelImageClick(imageElement) {
+            const imageSource = imageElement.getAttribute('data-src');
+            if (!imageSource) {
+                return;
+            }
+            showImage(imageSource);
+        }
+
+        function resolveImageSource(imageValue) {
+            if (!imageValue) {
+                return '';
+            }
+
+            if (imageValue.startsWith('data:') || imageValue.startsWith('http://') || imageValue.startsWith('https://')) {
+                return imageValue;
+            }
+
+            return '/uploads/' + encodeURIComponent(imageValue);
+        }
+
+        function renderImageHtml(imageValue, imageLabel) {
+            const imageSource = resolveImageSource(imageValue);
+
+            if (!imageSource) {
+                return '<div class="image-fallback" style="display:flex;">Image not available</div>';
+            }
+
+            return `
+                <img src="${imageSource}"
+                     data-src="${imageSource}"
+                     alt="${imageLabel}"
+                     class="thumbnail"
+                     loading="lazy"
+                     onclick="handleParcelImageClick(this)"
+                     onerror="onParcelImageError(this)">
+                <div class="image-fallback" style="display:none;">Image not available</div>
+            `;
+        }
+
+        function renderParcelImages(parcel) {
+            if (parcel.status !== 'pending') {
+                return '<div class="image-fallback" style="display:flex;">Images are shown only for pending parcels</div>';
+            }
+
+            return `
+                <div class="image-wrapper">
+                    <h4>Registration Image</h4>
+                    ${renderImageHtml(parcel.deliveryImage, 'Registration')}
+                </div>
+            `;
         }
 
         function formatDate(dateString) {
@@ -194,6 +312,7 @@
         // Auto-refresh every 30 seconds
         setInterval(loadParcels, 30000);
     </script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

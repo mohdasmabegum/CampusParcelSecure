@@ -15,6 +15,7 @@
         <nav class="navbar">
             <div class="nav-brand">Campus Parcel Secure</div>
             <div class="nav-links">
+                <a href="index.html" class="active">Home</a>
                 <a href="delivery.html">Delivery</a>
                 <a href="pickup.html">Pickup</a>
                 <a href="admin.html">Admin</a>
@@ -28,30 +29,53 @@
 
                 <div class="info-section">
                     <h3>🚚 For Delivery Personnel</h3>
-                    <p>Use the <a href="delivery.html" style="color: #667eea; font-weight: bold;">Delivery</a> page to register incoming parcels. Take a photo of the parcel and generate an OTP for the student.</p>
+                    <p>Use the <a href="delivery.html" class="inline-link">Delivery</a> page to register incoming parcels. Take a photo of the parcel and generate an OTP for the student.</p>
                 </div>
 
                 <div class="info-section">
                     <h3>🎓 For Students</h3>
-                    <p>Use the <a href="pickup.html" style="color: #667eea; font-weight: bold;">Pickup</a> page to collect your parcel. Enter your Student ID, OTP, and take a photo with the parcel.</p>
+                    <p>Use the <a href="pickup.html" class="inline-link">Pickup</a> page to collect your parcel. Enter your Student ID, OTP, and take a photo with the parcel.</p>
                 </div>
 
                 <div class="info-section">
                     <h3>👨‍💼 For Administrators</h3>
-                    <p>Use the <a href="admin.html" style="color: #667eea; font-weight: bold;">Admin Dashboard</a> to monitor all parcel activities and view delivery/pickup images.</p>
+                    <p>Use the <a href="admin.html" class="inline-link">Admin Dashboard</a> to monitor all parcel activities and view delivery/pickup images.</p>
                 </div>
 
-                <div style="margin-top: 30px; text-align: center;">
+                <div class="stats-panel">
+                    <div class="stats-panel-header">
+                        <h3>📈 Live System Snapshot</h3>
+                        <button id="refreshStatsBtn" class="btn btn-secondary" type="button">Refresh</button>
+                    </div>
+                    <div class="stats-grid stats-grid-compact">
+                        <div class="stat-card">
+                            <div class="stat-value" id="homeTotal">0</div>
+                            <div class="stat-label">Total Parcels</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="homePending">0</div>
+                            <div class="stat-label">Pending Pickup</div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-value" id="homeCompleted">0</div>
+                            <div class="stat-label">Completed</div>
+                        </div>
+                    </div>
+                    <p id="statsStatus" class="info-text">Loading live stats...</p>
+                </div>
+
+                <div class="cta-section">
                     <h3>Get Started</h3>
-                    <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px; flex-wrap: wrap;">
-                        <a href="delivery.html" class="btn btn-primary" style="text-decoration: none; width: auto;">Register Delivery</a>
-                        <a href="pickup.html" class="btn btn-primary" style="text-decoration: none; width: auto;">Pickup Parcel</a>
-                        <a href="admin.html" class="btn btn-secondary" style="text-decoration: none; width: auto;">Admin View</a>
+                    <div class="cta-actions">
+                        <a href="delivery.html" class="btn btn-primary btn-link">Register Delivery</a>
+                        <a href="pickup.html" class="btn btn-primary btn-link">Pickup Parcel</a>
+                        <a href="admin.html" class="btn btn-secondary btn-link">Admin View</a>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

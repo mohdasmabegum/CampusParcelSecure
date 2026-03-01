@@ -15,6 +15,7 @@
         <nav class="navbar">
             <div class="nav-brand">Campus Parcel Secure</div>
             <div class="nav-links">
+                <a href="index.html">Home</a>
                 <a href="delivery.html" class="active">Delivery</a>
                 <a href="pickup.html">Pickup</a>
                 <a href="admin.html">Admin</a>
@@ -28,11 +29,6 @@
 
                 <form id="deliveryForm">
                     <div class="form-group">
-                        <label for="studentId">Student ID *</label>
-                        <input type="text" id="studentId" name="studentId" required placeholder="e.g., STU001">
-                    </div>
-
-                    <div class="form-group">
                         <label for="studentName">Student Name *</label>
                         <input type="text" id="studentName" name="studentName" required placeholder="Full Name">
                     </div>
@@ -40,6 +36,12 @@
                     <div class="form-group">
                         <label for="parcelDescription">Parcel Description</label>
                         <textarea id="parcelDescription" name="parcelDescription" rows="3" placeholder="Optional description of the parcel"></textarea>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="deliveryOtp">OTP (provide to student) *</label>
+                        <input type="text" id="deliveryOtp" name="deliveryOtp" required placeholder="6-digit OTP" pattern="[0-9]{6}" maxlength="6">
+                        <small>Enter the OTP you will share with the student. This will be required during pickup.</small>
                     </div>
 
                     <div class="form-group">
@@ -83,26 +85,38 @@
             e.preventDefault();
             
             const formData = new FormData();
-            formData.append('studentId', document.getElementById('studentId').value);
             formData.append('studentName', document.getElementById('studentName').value);
             formData.append('parcelDescription', document.getElementById('parcelDescription').value);
+            formData.append('otp', document.getElementById('deliveryOtp').value);
             formData.append('image', imageInput.files[0]);
 
             try {
-                const response = await fetch('https://campus-parcel-secure.onrender.com/api/delivery', {
+                const response = await fetch('/api/delivery', {
                     method: 'POST',
                     body: formData
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data = null;
+                try {
+                    data = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                    if (!response.ok) {
+                        throw new Error(responseText || 'Server returned an invalid response');
+                    }
+                    throw new Error('Server returned invalid JSON');
+                }
 
-                if (data.success) {
+                if (!response.ok) {
+                    throw new Error((data && data.error) || responseText || 'Registration failed');
+                }
+
+                if (data && data.success) {
                     resultDiv.className = 'result-box success';
                     resultDiv.innerHTML = `
                         <h3>✅ Parcel Registered Successfully!</h3>
                         <div class="otp-display">
                             <p><strong>Parcel ID:</strong> ${data.parcelId}</p>
-                            <p><strong>Student ID:</strong> ${data.studentId}</p>
                             <p class="otp-code"><strong>OTP:</strong> <span class="otp-number">${data.otp}</span></p>
                             <p class="info-text">⚠️ Please provide this OTP to the student for parcel pickup</p>
                         </div>
@@ -117,7 +131,7 @@
                         resultDiv.style.display = 'none';
                     }, 10000);
                 } else {
-                    throw new Error(data.error || 'Registration failed');
+                    throw new Error((data && data.error) || 'Registration failed');
                 }
             } catch (error) {
                 resultDiv.className = 'result-box error';
@@ -128,7 +142,13 @@
                 resultDiv.style.display = 'block';
             }
         });
+
+        // Restrict OTP input to digits only
+        document.getElementById('deliveryOtp').addEventListener('input', function(e) {
+            this.value = this.value.replace(/[^0-9]/g, '').slice(0, 6);
+        });
     </script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

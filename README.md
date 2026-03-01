@@ -114,7 +114,91 @@ Get parcel statistics (total, pending, completed)
 - **Backend**: Node.js, Express.js
 - **File Upload**: Multer
 - **Frontend**: HTML5, CSS3, JavaScript (Vanilla)
-- **Storage**: In-memory (upgradable to database)
+- **Storage**: Supabase Postgres (production) with Upstash/local fallback
+
+## Backend Database Setup
+
+This project is now database-ready and uses **Supabase Postgres** in production when environment variables are set.
+
+### 1) Create a Supabase project
+
+- Go to [supabase.com](https://supabase.com) and create a new project.
+- In **SQL Editor**, run [supabase/schema.sql](supabase/schema.sql).
+- In **Project Settings → API**, copy:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+### 2) Add environment variables
+
+- In Vercel Project Settings → Environment Variables, add:
+   - `SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+
+For local development, copy `.env.example` to `.env` and fill values.
+
+### 3) Verify database mode
+
+After deploy, open:
+
+- `/api/storage-status`
+
+Expected response:
+
+```json
+{ "mode": "supabase-postgres", "filePath": null }
+```
+
+If you see `"local-file"`, environment variables are not configured yet.
+
+## Production Runbook
+
+Use this checklist for stable production operations on Vercel + Supabase.
+
+### Required environment variables (Vercel)
+
+- `SUPABASE_URL`
+- `SUPABASE_SERVICE_ROLE_KEY`
+
+### One-time database bootstrap
+
+- Run [supabase/schema.sql](supabase/schema.sql) in Supabase SQL Editor.
+
+### Health checks after deploy
+
+- `GET /api/storage-status` should return:
+
+```json
+{ "mode": "supabase-postgres", "filePath": null }
+```
+
+- `GET /api/stats` should return valid JSON with `total`, `pending`, `completed`.
+
+### Smoke test flow (manual)
+
+1. Submit one delivery from [public/delivery.html](public/delivery.html).
+2. Complete one pickup from [public/pickup.html](public/pickup.html).
+3. Confirm counters update in [public/admin.html](public/admin.html) and `GET /api/stats`.
+
+### Common issue signals
+
+- `"Could not find the table 'public.parcels'"` → schema not applied.
+- `"mode": "local-file"` in production → missing/incorrect `SUPABASE_*` env vars.
+
+## Deploy on Vercel
+
+1. Push this repository to GitHub.
+2. In Vercel, click **Add New Project** and import `CampusParcelSecure`.
+3. Keep defaults (Framework Preset: **Other**), then click **Deploy**.
+4. Open the generated URL and test:
+   - `/delivery.html`
+   - `/pickup.html`
+   - `/admin.html`
+
+This project includes `vercel.json` and is configured to run `server.js` as a Vercel Node function.
+
+### Important runtime note
+
+Vercel serverless file storage is temporary. Uploaded images are stored in `/tmp/uploads` and may be cleared between invocations/deployments. For production persistence, use object storage (for example, Vercel Blob, S3, or Cloudinary) and a database.
 
 ## Features Overview
 
@@ -165,4 +249,4 @@ Mohammad Asma Begum
 
 ---
 
-**Note**: This application uses in-memory storage. For production use, integrate with a proper database system. 
+**Note**: This application supports production database mode via Supabase. If DB environment variables are not set, it falls back to temporary local storage.

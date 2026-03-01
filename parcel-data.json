@@ -1,0 +1,39 @@
+{
+  "parcels": [
+    {
+      "id": 1,
+      "studentId": "N/A",
+      "studentName": "No Id Student",
+      "parcelDescription": "No ID Test",
+      "deliveryImage": "1772353201254-892032356.jpg",
+      "deliveryTimestamp": "2026-03-01T08:20:01.271Z",
+      "otp": "246810",
+      "status": "completed",
+      "pickupImage": "1772353201546-78990674.jpg",
+      "pickupTimestamp": "2026-03-01T08:20:01.549Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "fullName": "Supabase Test",
+      "email": "supa@test.com",
+      "password": "secret123",
+      "role": "student",
+      "studentId": "STU101",
+      "createdAt": "2026-03-01T06:45:41.036Z"
+    },
+    {
+      "id": 2,
+      "fullName": "VMTW Admin",
+      "email": "vmtw",
+      "password": "admin",
+      "role": "admin",
+      "studentId": null,
+      "createdAt": "2026-03-01T00:00:00.000Z"
+    }
+  ],
+  "parcelIdCounter": 2,
+  "userIdCounter": 3,
+  "updatedAt": "2026-03-01T08:20:01.549Z"
+}

@@ -15,6 +15,7 @@
         <nav class="navbar">
             <div class="nav-brand">Campus Parcel Secure</div>
             <div class="nav-links">
+                <a href="index.html">Home</a>
                 <a href="delivery.html">Delivery</a>
                 <a href="pickup.html" class="active">Pickup</a>
                 <a href="admin.html">Admin</a>
@@ -28,8 +29,8 @@
 
                 <form id="pickupForm">
                     <div class="form-group">
-                        <label for="studentId">Student ID *</label>
-                        <input type="text" id="studentId" name="studentId" required placeholder="e.g., STU001">
+                        <label for="studentId">Student ID (optional)</label>
+                        <input type="text" id="studentId" name="studentId" placeholder="Enter only if provided at delivery">
                     </div>
 
                     <div class="form-group">
@@ -63,7 +64,7 @@
                 <div class="info-section">
                     <h3>ℹ️ Pickup Instructions</h3>
                     <ol>
-                        <li>Enter your Student ID</li>
+                        <li>Enter your Student ID (optional)</li>
                         <li>Enter the OTP you received when the parcel was delivered</li>
                         <li>Take a photo with the parcel</li>
                         <li>Submit to complete the pickup</li>
@@ -102,14 +103,27 @@
             formData.append('image', imageInput.files[0]);
 
             try {
-                const response = await fetch('https://campus-parcel-secure.onrender.com/api/pickup', {
+                const response = await fetch('/api/pickup', {
                     method: 'POST',
                     body: formData
                 });
 
-                const data = await response.json();
+                const responseText = await response.text();
+                let data = null;
+                try {
+                    data = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                    if (!response.ok) {
+                        throw new Error(responseText || 'Server returned an invalid response');
+                    }
+                    throw new Error('Server returned invalid JSON');
+                }
 
-                if (data.success) {
+                if (!response.ok) {
+                    throw new Error((data && data.error) || responseText || 'Pickup failed');
+                }
+
+                if (data && data.success) {
                     resultDiv.className = 'result-box success';
                     resultDiv.innerHTML = `
                         <h3>✅ Parcel Pickup Successful!</h3>
@@ -127,14 +141,21 @@
                         resultDiv.style.display = 'none';
                     }, 5000);
                 } else {
-                    throw new Error(data.error || 'Pickup failed');
+                    throw new Error((data && data.error) || 'Pickup failed');
                 }
             } catch (error) {
+                let helpText = 'Please verify the OTP and try again.';
+                if (/already been used/i.test(error.message)) {
+                    helpText = 'This OTP is already used. Parcel may already be picked up.';
+                } else if (/Student ID does not match/i.test(error.message)) {
+                    helpText = 'Please check the Student ID used during delivery.';
+                }
+
                 resultDiv.className = 'result-box error';
                 resultDiv.innerHTML = `
                     <h3>❌ Pickup Failed</h3>
                     <p>${error.message}</p>
-                    <p class="info-text">Please verify your Student ID and OTP are correct.</p>
+                    <p class="info-text">${helpText}</p>
                 `;
                 resultDiv.style.display = 'block';
             }
@@ -191,6 +212,7 @@
             hiddenOtpField.value = otpValue;
         }
     </script>
+    <script src="auth.js"></script>
     <script src="app.js"></script>
 </body>
 </html>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'campus-parcel-secure-v1';
+const CACHE_NAME = 'campus-parcel-secure-v3';
 const urlsToCache = [
   './',
   './index.html',
@@ -23,33 +23,42 @@ self.addEventListener('install', event => {
 
 // Fetch event - serve from cache, fallback to network
 self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        // Cache hit - return response
-        if (response) {
-          return response;
-        }
+  if (event.request.method !== 'GET') {
+    return;
+  }
 
-        return fetch(event.request).then(
-          response => {
-            // Check if valid response
-            if (!response || response.status !== 200 || response.type !== 'basic') {
-              return response;
-            }
+  const requestUrl = new URL(event.request.url);
 
-            // Clone the response
-            const responseToCache = response.clone();
+  // Always use network for API calls so dashboard values stay fresh.
+  if (requestUrl.pathname.startsWith('/api/')) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
 
-            caches.open(CACHE_NAME)
-              .then(cache => {
-                cache.put(event.request, responseToCache);
-              });
-
-            return response;
+  // For same-origin pages/assets, prefer network and fallback to cache.
+  if (requestUrl.origin === self.location.origin) {
+    event.respondWith(
+      fetch(event.request)
+        .then(networkResponse => {
+          if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+            return networkResponse;
           }
-        );
-      })
+
+          const responseToCache = networkResponse.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put(event.request, responseToCache);
+          });
+
+          return networkResponse;
+        })
+        .catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // For cross-origin requests, fallback to cache if network fails.
+  event.respondWith(
+    fetch(event.request).catch(() => caches.match(event.request))
   );
 });
 

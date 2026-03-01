@@ -11,6 +11,121 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+// Theme handling
+const THEME_KEY = 'campusParcelTheme';
+
+function getPreferredTheme() {
+  const savedTheme = localStorage.getItem(THEME_KEY);
+  if (savedTheme) {
+    return savedTheme;
+  }
+  return 'dark';
+}
+
+function applyTheme(theme) {
+  document.body.setAttribute('data-theme', theme);
+  localStorage.setItem(THEME_KEY, theme);
+  const themeToggle = document.getElementById('themeToggle');
+  if (themeToggle) {
+    themeToggle.textContent = theme === 'dark' ? '☀️ Light' : '🌙 Dark';
+  }
+}
+
+function setupHeaderUtilities() {
+  const navLinks = document.querySelector('.nav-links');
+  if (!navLinks) {
+    return;
+  }
+
+  const existingThemeToggle = document.getElementById('themeToggle');
+  const existingInstallButton = document.getElementById('installButton');
+
+  if (!existingThemeToggle) {
+    const themeToggle = document.createElement('button');
+    themeToggle.id = 'themeToggle';
+    themeToggle.className = 'btn btn-secondary nav-action';
+    themeToggle.type = 'button';
+    navLinks.appendChild(themeToggle);
+
+    themeToggle.addEventListener('click', () => {
+      const currentTheme = document.body.getAttribute('data-theme') || 'light';
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme);
+    });
+  }
+
+  if (!existingInstallButton) {
+    const installButton = document.createElement('button');
+    installButton.id = 'installButton';
+    installButton.className = 'btn btn-secondary nav-action install-btn';
+    installButton.type = 'button';
+    installButton.textContent = '⬇️ Install App';
+    installButton.style.display = 'none';
+    navLinks.appendChild(installButton);
+  }
+
+  applyTheme(getPreferredTheme());
+}
+
+function animateCounter(element, nextValue) {
+  const startValue = Number(element.textContent) || 0;
+  const duration = 500;
+  const startTime = performance.now();
+
+  const tick = (currentTime) => {
+    const progress = Math.min((currentTime - startTime) / duration, 1);
+    const currentValue = Math.round(startValue + (nextValue - startValue) * progress);
+    element.textContent = currentValue;
+
+    if (progress < 1) {
+      requestAnimationFrame(tick);
+    }
+  };
+
+  requestAnimationFrame(tick);
+}
+
+async function loadHomeStats() {
+  const totalEl = document.getElementById('homeTotal');
+  const pendingEl = document.getElementById('homePending');
+  const completedEl = document.getElementById('homeCompleted');
+  const statusEl = document.getElementById('statsStatus');
+
+  if (!totalEl || !pendingEl || !completedEl) {
+    return;
+  }
+
+  try {
+    const response = await fetch('/api/stats');
+    if (!response.ok) {
+      throw new Error('Unable to fetch stats');
+    }
+
+    const stats = await response.json();
+    animateCounter(totalEl, Number(stats.total) || 0);
+    animateCounter(pendingEl, Number(stats.pending) || 0);
+    animateCounter(completedEl, Number(stats.completed) || 0);
+
+    if (statusEl) {
+      statusEl.textContent = `Last updated: ${new Date().toLocaleTimeString()}`;
+    }
+  } catch (error) {
+    if (statusEl) {
+      statusEl.textContent = `Could not load stats: ${error.message}`;
+    }
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+  setupHeaderUtilities();
+
+  const refreshStatsBtn = document.getElementById('refreshStatsBtn');
+  if (refreshStatsBtn) {
+    refreshStatsBtn.addEventListener('click', loadHomeStats);
+    loadHomeStats();
+  }
+});
+
 // Install prompt handling
 let deferredPrompt;
 
