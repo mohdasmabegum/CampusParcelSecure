@@ -1,4 +1,48 @@
 const AUTH_STORAGE_KEY = 'campusParcelAuth';
+const API_BASE_URL = (() => {
+  const configuredBase = (window.CAMPUS_API_BASE_URL || '').trim();
+  if (configuredBase) {
+    return configuredBase.replace(/\/$/, '');
+  }
+
+  if (window.location.hostname.endsWith('github.io')) {
+    return 'https://campus-parcel-secure.onrender.com';
+  }
+
+  return '';
+})();
+
+function buildApiUrl(path) {
+  if (!path) {
+    return API_BASE_URL || '';
+  }
+
+  if (/^https?:\/\//i.test(path)) {
+    return path;
+  }
+
+  return `${API_BASE_URL}${path}`;
+}
+
+async function parseApiResponse(response) {
+  const responseText = await response.text();
+  let payload = null;
+
+  try {
+    payload = responseText ? JSON.parse(responseText) : null;
+  } catch (parseError) {
+    if (!response.ok) {
+      throw new Error(responseText || `Request failed (${response.status})`);
+    }
+    throw new Error('Server returned invalid JSON. Please check backend API deployment.');
+  }
+
+  if (!response.ok) {
+    throw new Error((payload && payload.error) || responseText || `Request failed (${response.status})`);
+  }
+
+  return payload;
+}
 
 function saveAuthSession(data) {
   localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(data));
@@ -83,12 +127,8 @@ function setupAdminAuthForms() {
     }
 
     try {
-      const response = await fetch('/api/auth/admin-status');
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to load admin status');
-      }
+      const response = await fetch(buildApiUrl('/api/auth/admin-status'));
+      const data = await parseApiResponse(response);
 
       if (Number(data.adminCount) === 0) {
         authHint.style.display = 'block';
@@ -112,7 +152,7 @@ function setupAdminAuthForms() {
     const password = document.getElementById('adminLoginPassword').value;
 
     try {
-      const response = await fetch('/api/auth/login', {
+      const response = await fetch(buildApiUrl('/api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -120,9 +160,9 @@ function setupAdminAuthForms() {
         body: JSON.stringify({ email, password })
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
-      if (!response.ok || !data.success) {
+      if (!data || !data.success) {
         throw new Error(data.error || 'Login failed');
       }
 
@@ -184,7 +224,7 @@ function setupAdminRegisterPage() {
     }
 
     try {
-      const response = await fetch('/api/auth/register', {
+      const response = await fetch(buildApiUrl('/api/auth/register'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -198,9 +238,9 @@ function setupAdminRegisterPage() {
         })
       });
 
-      const data = await response.json();
+      const data = await parseApiResponse(response);
 
-      if (!response.ok || !data.success) {
+      if (!data || !data.success) {
         throw new Error(data.error || 'Registration failed');
       }
 
