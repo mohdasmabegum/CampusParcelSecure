@@ -11,6 +11,42 @@ if ('serviceWorker' in navigator) {
   });
 }
 
+const STATIC_API_BASE_URL = (() => {
+  const configuredBase = (window.CAMPUS_API_BASE_URL || '').trim();
+  if (configuredBase) {
+    return configuredBase.replace(/\/$/, '');
+  }
+
+  if (window.location.hostname.endsWith('github.io')) {
+    return 'https://campus-parcel-secure.vercel.app';
+  }
+
+  return '';
+})();
+
+if (STATIC_API_BASE_URL && typeof window.fetch === 'function') {
+  const nativeFetch = window.fetch.bind(window);
+
+  window.fetch = (input, init) => {
+    if (typeof input === 'string') {
+      if (input.startsWith('/api/')) {
+        return nativeFetch(`${STATIC_API_BASE_URL}${input}`, init);
+      }
+      return nativeFetch(input, init);
+    }
+
+    if (input instanceof Request) {
+      const requestUrl = new URL(input.url, window.location.origin);
+      if (requestUrl.origin === window.location.origin && requestUrl.pathname.startsWith('/api/')) {
+        const rewrittenUrl = `${STATIC_API_BASE_URL}${requestUrl.pathname}${requestUrl.search}`;
+        return nativeFetch(new Request(rewrittenUrl, input), init);
+      }
+    }
+
+    return nativeFetch(input, init);
+  };
+}
+
 // Theme handling
 const THEME_KEY = 'campusParcelTheme';
 

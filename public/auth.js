@@ -6,7 +6,7 @@ const API_BASE_URL = (() => {
   }
 
   if (window.location.hostname.endsWith('github.io')) {
-    return 'https://campus-parcel-secure.onrender.com';
+    return 'https://campus-parcel-secure.vercel.app';
   }
 
   return '';
